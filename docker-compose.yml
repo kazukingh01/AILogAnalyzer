@@ -1,0 +1,35 @@
+services:
+  log-sync-webserver:
+    build: ./log-sync
+    environment:
+      RSYNC_SRC: "${RSYNC_SRC}"
+      RSYNC_DEST: "${RSYNC_DEST}"
+      SSH_PORT: "${SSH_PORT:-22}"
+    volumes:
+      - log-data:/data/logs
+    secrets:
+      - ssh_private_key
+      - ssh_passphrase
+
+  ai-agent:
+    build: ./ai-agent
+    environment:
+      LOG_BASE_DIR: "/data/logs"
+    volumes:
+      - log-data:/data/logs:ro
+      - claude-auth:/home/claude/.claude
+    secrets:
+      - discord_webhook_url
+    restart: unless-stopped
+
+volumes:
+  log-data:
+  claude-auth:
+
+secrets:
+  ssh_private_key:
+    file: ./secrets/ssh_private_key
+  ssh_passphrase:
+    file: ./secrets/ssh_passphrase
+  discord_webhook_url:
+    file: ./secrets/discord_webhook_url

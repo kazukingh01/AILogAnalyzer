@@ -1,0 +1,9 @@
+[Unit]
+Description=AILogAnalyzer - Sync logs from webserver
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/AILogAnalyzer
+ExecStart=/usr/bin/docker compose run --rm log-sync-webserver
