@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-WEBHOOK_URL=$(cat /run/secrets/discord_webhook_url)
+WEBHOOK_URL="${DISCORD_WEBHOOK_URL:?DISCORD_WEBHOOK_URL is not set}"
 MESSAGE="${1:?Usage: notify-discord.sh <message>}"
 
 # Truncate to Discord's 2000 char limit (leave room for formatting)

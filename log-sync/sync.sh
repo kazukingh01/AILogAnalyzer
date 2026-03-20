@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-export SSH_ASKPASS=/usr/local/bin/ssh-askpass.sh
-export SSH_ASKPASS_REQUIRE=force
+if [ -x /usr/local/bin/ssh-askpass.sh ]; then
+  export SSH_ASKPASS=/usr/local/bin/ssh-askpass.sh
+  export SSH_ASKPASS_REQUIRE=force
+fi
 
 PORT="${SSH_PORT:-22}"
 DEST="/data/logs/${RSYNC_DEST}"
