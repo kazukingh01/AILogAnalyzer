@@ -7,7 +7,7 @@ if [ -x /usr/local/bin/ssh-askpass.sh ]; then
 fi
 
 PORT="${SSH_PORT:-22}"
-DEST="/data/logs/${RSYNC_DEST}"
+DEST="/data/logs/${DIR_LOGS}"
 
 mkdir -p "${DEST}"
 

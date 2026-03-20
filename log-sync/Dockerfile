@@ -1,8 +1,6 @@
-FROM ubuntu:24.04
+FROM alpine:3.21
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends rsync openssh-client && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache rsync openssh-client bash
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY sync.sh /usr/local/bin/sync.sh

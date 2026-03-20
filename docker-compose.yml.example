@@ -1,42 +1,32 @@
 services:
-  log-sync-serviceA:
+  log-sync-service-a:
     build: ./log-sync
     environment:
-      RSYNC_SRC: "${RSYNC_SRC_A}"
-      RSYNC_DEST: "${RSYNC_DEST_A}"
-      SSH_PORT: "${SSH_PORT_A:-22}"
+      RSYNC_SRC: "deploy@192.168.1.10:/var/log/nginx/"
+      DIR_LOGS: "serviceA"
+      SSH_PORT: "22"
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_a"
-      SSH_PASSPHRASE_FILE: "/run/secrets/ssh_passphrase_a"
+      SSH_PASSPHRASE: "your-passphrase-here"
     volumes:
-      - log-data:/data/logs
+      - ./logs:/data/logs
     secrets:
       - ssh_private_key_a
-      - ssh_passphrase_a
 
-  log-sync-serviceB:
+  log-sync-service-b:
     build: ./log-sync
     environment:
-      RSYNC_SRC: "${RSYNC_SRC_B}"
-      RSYNC_DEST: "${RSYNC_DEST_B}"
-      SSH_PORT: "${SSH_PORT_B:-22}"
+      RSYNC_SRC: "deploy@192.168.1.20:/var/log/nginx/"
+      DIR_LOGS: "serviceB"
+      SSH_PORT: "22"
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_b"
-      SSH_PASSPHRASE_FILE: "/run/secrets/ssh_passphrase_b"
+      SSH_PASSPHRASE: "your-passphrase-here"
     volumes:
-      - log-data:/data/logs
+      - ./logs:/data/logs
     secrets:
       - ssh_private_key_b
-      - ssh_passphrase_b
-
-volumes:
-  log-data:
-    name: ailog-log-data
 
 secrets:
   ssh_private_key_a:
     file: ./secrets/ssh_private_key_a
-  ssh_passphrase_a:
-    file: ./secrets/ssh_passphrase_a
   ssh_private_key_b:
     file: ./secrets/ssh_private_key_b
-  ssh_passphrase_b:
-    file: ./secrets/ssh_passphrase_b
