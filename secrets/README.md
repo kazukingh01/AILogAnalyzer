@@ -2,6 +2,7 @@
 
 Place the following files here (all git-ignored):
 
-- `ssh_private_key` — SSH private key for rsync access
-- `ssh_passphrase` — Passphrase for the SSH key (single line, no trailing newline)
-- `discord_webhook_url` — Discord webhook URL for notifications (single line, no trailing newline)
+- `ssh_private_key_a` — SSH private key for service A rsync access
+- `ssh_private_key_b` — SSH private key for service B rsync access
+
+Note: SSH passphrase and Discord webhook URL are configured via environment variables (see `.env.example`).

@@ -14,9 +14,11 @@ ssh-keyscan -p "${PORT}" "${HOST}" >> /root/.ssh/known_hosts 2>/dev/null
 
 # Create SSH_ASKPASS helper only if passphrase is provided
 if [ -n "${SSH_PASSPHRASE:-}" ]; then
-  cat > /usr/local/bin/ssh-askpass.sh << SCRIPT
+  printf '%s\n' "${SSH_PASSPHRASE}" > /usr/local/bin/.ssh_passphrase
+  chmod 600 /usr/local/bin/.ssh_passphrase
+  cat > /usr/local/bin/ssh-askpass.sh << 'SCRIPT'
 #!/bin/bash
-echo '${SSH_PASSPHRASE}'
+cat /usr/local/bin/.ssh_passphrase
 SCRIPT
   chmod +x /usr/local/bin/ssh-askpass.sh
 fi
