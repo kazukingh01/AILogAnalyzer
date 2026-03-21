@@ -11,6 +11,15 @@ systemctl daemon-reload
 
 echo "Enabling and starting timers..."
 systemctl enable --now ailog-sync-webserver.timer
-systemctl enable --now ailog-agent.timer
 
-echo "Done. Check status with: systemctl list-timers ailog-*"
+# Enable ai-agent timers per service (add more as needed)
+# Usage: systemctl enable --now ailog-agent@service-a.timer
+echo ""
+echo "To enable ai-agent for a service, run:"
+echo "  systemctl enable --now ailog-agent@<service-name>.timer"
+echo ""
+echo "Example:"
+echo "  systemctl enable --now ailog-agent@service-a.timer"
+echo "  systemctl enable --now ailog-agent@service-b.timer"
+echo ""
+echo "Check status with: systemctl list-timers ailog-*"

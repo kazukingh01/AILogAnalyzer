@@ -4,3 +4,6 @@ secrets/*
 .env
 docker-compose.yml
 logs/
+work/
+knowledge/
+db/

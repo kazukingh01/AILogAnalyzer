@@ -2,7 +2,7 @@ FROM ubuntu:24.04
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      curl jq git ca-certificates sudo && \
+      curl jq git ca-certificates sudo python3 && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     npm install -g @anthropic-ai/claude-code && \
@@ -20,8 +20,12 @@ RUN mkdir -p /home/claude/.claude && \
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY analyze.sh /usr/local/bin/analyze.sh
 COPY notify-discord.sh /usr/local/bin/notify-discord.sh
+COPY search-logs.sh /usr/local/bin/search-logs.sh
+COPY extract.py /usr/local/bin/extract.py
+COPY commit.py /usr/local/bin/commit.py
 COPY CLAUDE.md /home/claude/CLAUDE.md
-RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/analyze.sh /usr/local/bin/notify-discord.sh && \
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/analyze.sh \
+             /usr/local/bin/notify-discord.sh /usr/local/bin/search-logs.sh && \
     chown claude:claude /home/claude/CLAUDE.md
 
 USER claude
