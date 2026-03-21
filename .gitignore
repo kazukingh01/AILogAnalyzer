@@ -1,0 +1,6 @@
+secrets/*
+!secrets/.gitkeep
+!secrets/README.md
+.env
+docker-compose.yml
+logs/

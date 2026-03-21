@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(curl:*)",
+      "Read(./.env)",
+      "Read(./.*.env)",
+      "Read(~/.ssh/*)",
+      "Read(./secrets/**)",
+      "Read(./docker-compose.yml)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ./*)",
+      "Bash(rm -rf *)"
+    ]
+  }
+}
