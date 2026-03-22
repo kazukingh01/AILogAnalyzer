@@ -3,7 +3,4 @@ secrets/*
 !secrets/README.md
 .env
 docker-compose.yml
-logs/
-work/
-knowledge/
-db/
+share/

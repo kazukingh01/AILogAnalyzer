@@ -6,5 +6,5 @@ Requires=docker.service
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/AILogAnalyzer
-ExecStart=/usr/bin/docker compose exec -T ai-agent-%i /usr/local/bin/analyze.sh
+ExecStart=/usr/bin/docker exec -T ailog-agent-%i /tools/analyze.sh
 TimeoutStartSec=600

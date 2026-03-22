@@ -16,19 +16,26 @@ from pathlib import Path
 DB_PATH = "/data/db/state.db"
 LOG_BASE = "/data/logs"
 WORK_BASE = "/data/work"
+MAX_LINES = int(os.environ.get("MAX_EXTRACT_LINES", "0"))  # 0 = unlimited
 
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS log_state (
-            service     TEXT NOT NULL,
-            filepath    TEXT NOT NULL,
-            last_line   INTEGER NOT NULL,
-            last_size   INTEGER NOT NULL,
-            updated_at  TEXT NOT NULL,
+            service      TEXT NOT NULL,
+            filepath     TEXT NOT NULL,
+            last_line    INTEGER NOT NULL,
+            total_lines  INTEGER NOT NULL DEFAULT 0,
+            last_size    INTEGER NOT NULL,
+            updated_at   TEXT NOT NULL,
             PRIMARY KEY (service, filepath)
         )
     """)
+    # Migrate: add total_lines if missing
+    cur = conn.execute("PRAGMA table_info(log_state)")
+    columns = [row[1] for row in cur]
+    if "total_lines" not in columns:
+        conn.execute("ALTER TABLE log_state ADD COLUMN total_lines INTEGER NOT NULL DEFAULT 0")
     conn.commit()
 
 
@@ -42,8 +49,8 @@ def get_state(conn: sqlite3.Connection, service: str) -> dict[str, dict]:
 
 
 def extract_service(service: str) -> None:
-    log_dir = Path(LOG_BASE) / service
-    work_dir = Path(WORK_BASE) / service
+    log_dir = Path(LOG_BASE)
+    work_dir = Path(WORK_BASE)
 
     if not log_dir.is_dir():
         print(f"Log directory not found: {log_dir}", file=sys.stderr)
@@ -63,11 +70,16 @@ def extract_service(service: str) -> None:
     conn.close()
 
     state_entries = []
+    total_extracted = 0
 
     # Walk all log files
     for log_file in sorted(log_dir.rglob("*")):
         if not log_file.is_file():
             continue
+
+        # Stop if we've hit the max lines limit
+        if MAX_LINES > 0 and total_extracted >= MAX_LINES:
+            break
 
         rel_path = str(log_file.relative_to(log_dir))
         file_size = log_file.stat().st_size
@@ -98,16 +110,29 @@ def extract_service(service: str) -> None:
 
         new_lines = lines[start_line:]
 
+        # Cap lines if max limit is set
+        if MAX_LINES > 0:
+            remaining = MAX_LINES - total_extracted
+            if len(new_lines) > remaining:
+                new_lines = new_lines[:remaining]
+                # Record only up to the lines we actually extracted
+                total_lines = start_line + len(new_lines)
+
         # Save extracted lines to work directory
         out_file = work_dir / rel_path
         out_file.parent.mkdir(parents=True, exist_ok=True)
         with open(out_file, "w") as f:
             f.writelines(new_lines)
 
+        total_extracted += len(new_lines)
+
+        actual_total = len(lines)
+
         state_entries.append(
             {
                 "filepath": rel_path,
                 "last_line": total_lines,
+                "total_lines": actual_total,
                 "last_size": file_size,
             }
         )
@@ -125,7 +150,11 @@ def extract_service(service: str) -> None:
             indent=2,
         )
 
-    print(f"Extracted {len(state_entries)} file(s) for service '{service}'")
+    limit_msg = f" (limit: {MAX_LINES})" if MAX_LINES > 0 else ""
+    print(
+        f"Extracted {total_extracted} line(s) from {len(state_entries)} file(s) "
+        f"for service '{service}'{limit_msg}"
+    )
 
 
 def main() -> None:

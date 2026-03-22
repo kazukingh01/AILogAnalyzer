@@ -8,7 +8,7 @@ services:
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_a"
       SSH_PASSPHRASE: "your-passphrase-here"
     volumes:
-      - ./logs:/data/logs
+      - ${SHARE_DIR}/logs:/data/logs
     secrets:
       - ssh_private_key_a
 
@@ -21,33 +21,9 @@ services:
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_b"
       SSH_PASSPHRASE: "your-passphrase-here"
     volumes:
-      - ./logs:/data/logs
+      - ${SHARE_DIR}/logs:/data/logs
     secrets:
       - ssh_private_key_b
-
-  ai-agent-service-a:
-    build: ./ai-agent
-    environment:
-      SERVICE_NAME: "serviceA"
-      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
-      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL}"
-    volumes:
-      - ./logs/serviceA:/data/logs/serviceA:ro
-      - ./work/serviceA:/data/work/serviceA
-      - ./knowledge/serviceA:/data/knowledge
-      - ./db:/data/db
-
-  ai-agent-service-b:
-    build: ./ai-agent
-    environment:
-      SERVICE_NAME: "serviceB"
-      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
-      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL}"
-    volumes:
-      - ./logs/serviceB:/data/logs/serviceB:ro
-      - ./work/serviceB:/data/work/serviceB
-      - ./knowledge/serviceB:/data/knowledge
-      - ./db:/data/db
 
 secrets:
   ssh_private_key_a:

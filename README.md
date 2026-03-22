@@ -1,12 +1,17 @@
 # AILogAnalyzer
 
+
 ```bash
-sudo docker build -t ailog-agent ./ai-agent
-sudo docker run -d --name ailog-agent \
-  --env-file .env \
-  -v ./logs:/data/logs:ro \
-  ailog-agent
-sudo docker exec -it -u claude ailog-agent claude --dangerously-skip-permissions
+sudo docker compose up && sudo docker compose down
 ```
 
+```bash
+sudo bash ai-agent/docker_run.sh servicename
+# sudo docker exec -it -u claude ailog-agent-{servicename} claude --dangerously-skip-permissions
+```
 
+```bash
+SERVICE_NAME=xxxxx
+sudo docker exec -t ailog-agent-${SERVICE_NAME} /tools/analyze.sh 100000
+sudo docker exec -t ailog-agent-${SERVICE_NAME} python3 /tools/status.py --all
+```

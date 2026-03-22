@@ -18,7 +18,7 @@ WORK_BASE = "/data/work"
 
 
 def commit_service(service: str) -> None:
-    work_dir = Path(WORK_BASE) / service
+    work_dir = Path(WORK_BASE)
     state_file = work_dir / "_state.json"
 
     if not state_file.exists():
@@ -34,21 +34,28 @@ def commit_service(service: str) -> None:
     for entry in state["files"]:
         conn.execute(
             """
-            INSERT INTO log_state (service, filepath, last_line, last_size, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO log_state (service, filepath, last_line, total_lines, last_size, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT (service, filepath)
             DO UPDATE SET last_line = excluded.last_line,
+                          total_lines = excluded.total_lines,
                           last_size = excluded.last_size,
                           updated_at = excluded.updated_at
             """,
-            (service, entry["filepath"], entry["last_line"], entry["last_size"], now),
+            (service, entry["filepath"], entry["last_line"], entry["total_lines"], entry["last_size"], now),
         )
 
     conn.commit()
     conn.close()
 
-    # Clean up work directory
-    shutil.rmtree(work_dir, ignore_errors=True)
+    # Clean up work directory (keep log files)
+    keep_files = {"analyze.log", "claude_stream.jsonl"}
+    for item in work_dir.rglob("*"):
+        if item.is_file() and item.name not in keep_files:
+            item.unlink()
+    for item in sorted(work_dir.rglob("*"), reverse=True):
+        if item.is_dir() and not any(item.iterdir()):
+            item.rmdir()
 
     print(f"Committed {len(state['files'])} file(s) for service '{service}'")
 
