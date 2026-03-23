@@ -15,6 +15,5 @@ fi
 
 # Exclude _state.json from search
 grep -r -i -n -C "${CONTEXT}" -E "${PATTERN}" "${DIR}" \
-  --include="*" \
   --exclude="_state.json" \
   2>/dev/null || echo "No matches found for pattern: ${PATTERN}"

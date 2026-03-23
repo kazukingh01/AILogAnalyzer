@@ -3,6 +3,7 @@
 
 import argparse
 import sqlite3
+from datetime import datetime, timezone
 
 DB_PATH = "/data/db/state.db"
 
@@ -10,11 +11,32 @@ DB_PATH = "/data/db/state.db"
 def show_status(service: str | None = None, show_all: bool = False) -> None:
     conn = sqlite3.connect(DB_PATH)
 
-    query = "SELECT service, filepath, last_line, total_lines, last_size, updated_at FROM log_state"
-    params: tuple = ()
+    # Check if log_state table exists
+    table_exists = conn.execute(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='log_state'"
+    ).fetchone()[0]
+    if not table_exists:
+        print("No records found. (database not initialized)")
+        conn.close()
+        return
+
+    # Build query
+    conditions = []
+    params: list = []
     if service:
-        query += " WHERE service = ?"
-        params = (service,)
+        conditions.append("service = ?")
+        params.append(service)
+    if not show_all:
+        # Default: show only files from the most recent processing run
+        sub = "SELECT MAX(updated_at) FROM log_state"
+        if service:
+            sub += " WHERE service = ?"
+            params.append(service)
+        conditions.append(f"updated_at = ({sub})")
+
+    query = "SELECT service, filepath, last_line, total_lines, last_size, updated_at FROM log_state"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
     query += " ORDER BY service, filepath"
 
     rows = conn.execute(query, params).fetchall()
@@ -39,15 +61,14 @@ def show_status(service: str | None = None, show_all: bool = False) -> None:
 
         if remaining == 0:
             completed += 1
-            if not show_all:
-                continue
         else:
             incomplete += 1
 
         if svc != current_service:
             if current_service is not None:
                 print()
-            print(f"=== {svc} ===")
+            ts = datetime.fromtimestamp(updated_at, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            print(f"=== {svc} ({ts}) ===")
             current_service = svc
 
         print(f"  {filepath:50s}  {last_line:>8} / {total_lines:>8}  ({pct:5.1f}%)  remaining: {remaining}")
@@ -61,7 +82,7 @@ def show_status(service: str | None = None, show_all: bool = False) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Show log analysis progress")
     parser.add_argument("service", nargs="?", default=None)
-    parser.add_argument("--all", "-a", action="store_true", help="Show completed files too")
+    parser.add_argument("--all", "-a", action="store_true", help="Show all records (default: latest run only)")
     args = parser.parse_args()
     show_status(args.service, args.all)
 

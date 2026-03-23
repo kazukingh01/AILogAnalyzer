@@ -29,7 +29,7 @@ def commit_service(service: str) -> None:
         state = json.load(f)
 
     conn = sqlite3.connect(DB_PATH)
-    now = datetime.now(timezone.utc).isoformat()
+    now = int(datetime.now(timezone.utc).timestamp())
 
     for entry in state["files"]:
         conn.execute(

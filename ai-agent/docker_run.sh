@@ -11,6 +11,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 SERVICENAME="${SERVICENAME:?Usage: $0 [--delete] <service_name>}"
+
+# Validate service name (alphanumeric, hyphens, underscores only)
+if [[ ! "${SERVICENAME}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+  echo "Invalid service name: '${SERVICENAME}' (allowed: [a-zA-Z0-9_-]+)" >&2
+  exit 1
+fi
+
 SHARE_DIR="${SHARE_DIR:-./share}"
 CONTAINER_NAME="ailog-agent-${SERVICENAME}"
 IMAGE_NAME="ailog-agent"
@@ -24,23 +31,23 @@ if [ "${DELETE}" = true ]; then
   rm -rf "${SHARE_DIR}/db/${SERVICENAME}" "${SHARE_DIR}/knowledge/${SERVICENAME}" "${SHARE_DIR}/work/${SERVICENAME}"
 fi
 
-docker build -t ${IMAGE_NAME} ./ai-agent
+docker build -t "${IMAGE_NAME}" ./ai-agent
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-docker run -d --name ${CONTAINER_NAME} \
-  -e SERVICE_NAME=${SERVICENAME} \
+docker run -d --name "${CONTAINER_NAME}" \
+  -e "SERVICE_NAME=${SERVICENAME}" \
   --env-file .env \
-  -v ${SCRIPT_DIR}/tools:/tools:ro \
-  -v ${SHARE_DIR}/logs/${SERVICENAME}:/data/logs/:ro \
-  -v ${SHARE_DIR}/work/${SERVICENAME}:/data/work/ \
-  -v ${SHARE_DIR}/knowledge/${SERVICENAME}:/data/knowledge \
-  -v ${SHARE_DIR}/db/${SERVICENAME}:/data/db \
-  ${IMAGE_NAME}
+  -v "${SCRIPT_DIR}/tools:/tools:ro" \
+  -v "${SHARE_DIR}/logs/${SERVICENAME}:/data/logs/:ro" \
+  -v "${SHARE_DIR}/work/${SERVICENAME}:/data/work/" \
+  -v "${SHARE_DIR}/knowledge/${SERVICENAME}:/data/knowledge" \
+  -v "${SHARE_DIR}/db/${SERVICENAME}:/data/db" \
+  "${IMAGE_NAME}"
 
 # Fix ownership of mounted volumes to match container's claude user
-CLAUDE_UID=$(docker exec ${CONTAINER_NAME} id -u claude)
-CLAUDE_GID=$(docker exec ${CONTAINER_NAME} id -g claude)
-docker exec -u root ${CONTAINER_NAME} chown -R ${CLAUDE_UID}:${CLAUDE_GID} /data/work /data/knowledge /data/db
+CLAUDE_UID=$(docker exec "${CONTAINER_NAME}" id -u claude)
+CLAUDE_GID=$(docker exec "${CONTAINER_NAME}" id -g claude)
+docker exec -u root "${CONTAINER_NAME}" chown -R "${CLAUDE_UID}:${CLAUDE_GID}" /data/work /data/knowledge /data/db
 
-docker exec -it -u claude ${CONTAINER_NAME} claude --dangerously-skip-permissions
+docker exec -it -u claude "${CONTAINER_NAME}" claude --dangerously-skip-permissions

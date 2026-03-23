@@ -27,15 +27,36 @@ def init_db(conn: sqlite3.Connection) -> None:
             last_line    INTEGER NOT NULL,
             total_lines  INTEGER NOT NULL DEFAULT 0,
             last_size    INTEGER NOT NULL,
-            updated_at   TEXT NOT NULL,
+            updated_at   INTEGER NOT NULL,
             PRIMARY KEY (service, filepath)
         )
     """)
     # Migrate: add total_lines if missing
     cur = conn.execute("PRAGMA table_info(log_state)")
-    columns = [row[1] for row in cur]
+    columns = {row[1]: row[2] for row in cur}
     if "total_lines" not in columns:
         conn.execute("ALTER TABLE log_state ADD COLUMN total_lines INTEGER NOT NULL DEFAULT 0")
+    # Migrate: updated_at TEXT -> INTEGER (Unix epoch)
+    if columns.get("updated_at") == "TEXT":
+        conn.execute("""
+            CREATE TABLE log_state_new (
+                service      TEXT NOT NULL,
+                filepath     TEXT NOT NULL,
+                last_line    INTEGER NOT NULL,
+                total_lines  INTEGER NOT NULL DEFAULT 0,
+                last_size    INTEGER NOT NULL,
+                updated_at   INTEGER NOT NULL,
+                PRIMARY KEY (service, filepath)
+            )
+        """)
+        conn.execute("""
+            INSERT INTO log_state_new (service, filepath, last_line, total_lines, last_size, updated_at)
+            SELECT service, filepath, last_line, total_lines, last_size,
+                   CAST(strftime('%s', updated_at) AS INTEGER)
+            FROM log_state
+        """)
+        conn.execute("DROP TABLE log_state")
+        conn.execute("ALTER TABLE log_state_new RENAME TO log_state")
     conn.commit()
 
 
@@ -102,21 +123,22 @@ def extract_service(service: str) -> None:
             print(f"Warning: cannot read {log_file}: {e}", file=sys.stderr)
             continue
 
-        total_lines = len(lines)
+        actual_total = len(lines)
 
-        if start_line >= total_lines:
+        if start_line >= actual_total:
             # No new content
             continue
 
         new_lines = lines[start_line:]
 
         # Cap lines if max limit is set
+        processed_up_to = actual_total
         if MAX_LINES > 0:
             remaining = MAX_LINES - total_extracted
             if len(new_lines) > remaining:
                 new_lines = new_lines[:remaining]
                 # Record only up to the lines we actually extracted
-                total_lines = start_line + len(new_lines)
+                processed_up_to = start_line + len(new_lines)
 
         # Save extracted lines to work directory
         out_file = work_dir / rel_path
@@ -126,12 +148,10 @@ def extract_service(service: str) -> None:
 
         total_extracted += len(new_lines)
 
-        actual_total = len(lines)
-
         state_entries.append(
             {
                 "filepath": rel_path,
-                "last_line": total_lines,
+                "last_line": processed_up_to,
                 "total_lines": actual_total,
                 "last_size": file_size,
             }

@@ -29,9 +29,9 @@ python3 /tools/extract.py "${SERVICE_NAME}" 2>&1 | tee -a "${LOG_FILE}" || {
   exit 1
 }
 
-# Check if there are any extracted files (excluding _state.json, log files)
+# Check if there are any extracted files from _state.json
 WORK_DIR="/data/work"
-FILE_COUNT=$(find "${WORK_DIR}" -type f ! -name "_state.json" ! -name "analyze.log" ! -name "claude_stream.jsonl" 2>/dev/null | wc -l)
+FILE_COUNT=$(python3 -c "import json; print(len(json.load(open('${WORK_DIR}/_state.json'))['files']))" 2>/dev/null || echo 0)
 
 if [ "${FILE_COUNT}" -eq 0 ]; then
   log "No new logs to analyze"
