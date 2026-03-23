@@ -5,8 +5,8 @@ set -euo pipefail
 # Usage: search-logs.sh <directory> [context_lines] [pattern]
 
 DIR="${1:?Usage: search-logs.sh <dir> [context_lines] [pattern]}"
-CONTEXT="${2:-100}"
-PATTERN="${3:-error|warning|fatal|exception|critical}"
+CONTEXT="${2:-10}"
+PATTERN="${3:-error|warning|fatal|exception|critical|panic|alert|emergency|severe|traceback|segfault|segmentation fault|oom|out of memory|timeout|refused|connection refused|denied|permission denied|failed|abort|aborted|killed|assert}"
 
 if [ ! -d "${DIR}" ]; then
   echo "Directory not found: ${DIR}" >&2

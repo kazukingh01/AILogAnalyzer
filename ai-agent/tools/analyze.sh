@@ -40,8 +40,14 @@ if [ "${FILE_COUNT}" -eq 0 ]; then
   exit 0
 fi
 
-# 2. Run Claude analysis
-log "Step 2: Running Claude analysis (${FILE_COUNT} files)"
+# 2. Pre-scan for errors/warnings
+SEARCH_RESULT="/data/work/_search_result.txt"
+log "Step 2: Pre-scanning logs with search-logs.sh"
+/tools/search-logs.sh "${WORK_DIR}" > "${SEARCH_RESULT}" 2>&1 || true
+log "Search result: $(wc -l < "${SEARCH_RESULT}") lines"
+
+# 3. Run Claude analysis
+log "Step 3: Running Claude analysis (${FILE_COUNT} files)"
 claude -p "Analyze the log files for service '${SERVICE_NAME}'. Follow the instructions in CLAUDE.md." \
   --dangerously-skip-permissions \
   --max-turns 15 \
@@ -63,16 +69,16 @@ fi
 COST_DETAIL=$(jq -r 'select(.type == "result") | {cost_usd: .total_cost_usd, turns: .num_turns, duration_ms: .duration_ms, session_id: .session_id}' "${STREAM_LOG}" 2>/dev/null | tail -1)
 log "Usage: ${COST_DETAIL}"
 
-# 3. Send report to Discord
-log "Step 3: Sending report to Discord"
+# 4. Send report to Discord
+log "Step 4: Sending report to Discord"
 /tools/notify-discord.sh "[${SERVICE_NAME}] ${RESULT}" || log "Discord notification failed (ignored)"
 
-# 4. Commit state (only on success — failed analysis will retry next run)
-log "Step 4: Committing state"
+# 5. Commit state (only on success — failed analysis will retry next run)
+log "Step 5: Committing state"
 python3 /tools/commit.py "${SERVICE_NAME}" 2>&1 | tee -a "${LOG_FILE}"
 
-# 5. Send analysis progress to Discord
-log "Step 5: Sending progress to Discord"
+# 6. Send analysis progress to Discord
+log "Step 6: Sending progress to Discord"
 STATUS=$(python3 /tools/status.py "${SERVICE_NAME}" 2>&1) || true
 /tools/notify-discord.sh "[${SERVICE_NAME}] 解析進捗:
 \`\`\`
