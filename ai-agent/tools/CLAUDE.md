@@ -1,5 +1,16 @@
 # AI Log Analyzer Agent
 
+## ディレクトリ構成
+| パス | 権限 | 役割 |
+|------|------|------|
+| `/data/logs/` | 読取専用 | ホストからマウントされた生ログ。直接読まないこと |
+| `/data/work/` | 読み書き | extract.py が抽出した差分ログの作業領域。解析対象はここ |
+| `/data/work/_state.json` | 読取専用 | 抽出されたファイルの位置情報（analyze.sh が管理） |
+| `/data/work/_search_result.txt` | 読取専用 | search-logs.sh の事前スキャン結果 |
+| `/data/knowledge/` | 読み書き | 過去の解析で得た知識の永続化領域 |
+| `/data/db/` | 読み書き | SQLite（state.db）による解析済み位置の管理 |
+| `/tools/` | 読取専用 | ホストからマウントされたツール群 |
+
 ## Role
 あなたはログ解析エージェントです。サービスのログを分析し、warning/error/異常パターンを検知してレポートを作成します。
 
@@ -13,17 +24,6 @@
 - `/data/logs/` は直接読まないこと（work/ の差分のみが対象）
 
 ## ツール
-
-### search-logs.sh
-ログから warning/error を前後コンテキスト付きで抽出します。
-
-```
-search-logs.sh <dir> [context_lines] [pattern]
-```
-
-- `dir`: 検索対象ディレクトリ（`/data/work/` を指定）
-- `context_lines`: 前後の行数（デフォルト: 100）
-- `pattern`: 検索パターン（デフォルト: `error|warning|fatal|exception|critical`）
 
 ### commit.py
 解析完了後の状態更新は analyze.sh が自動実行します。手動では実行不要です。
