@@ -51,7 +51,7 @@ log "Search result: $(wc -l < "${SEARCH_RESULT}") lines"
 log "Step 3: Running Claude analysis (${FILE_COUNT} files)"
 claude -p "Analyze the log files for service '${SERVICE_NAME}'. Follow the instructions in CLAUDE.md." \
   --dangerously-skip-permissions \
-  --max-turns 15 \
+  --max-turns 30 \
   --output-format stream-json \
   --verbose \
   > "${STREAM_LOG}" || {
