@@ -40,7 +40,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 KNOWLEDGE_FILE="${SHARE_DIR}/knowledge/${SERVICENAME}.md"
 DB_FILE="${SHARE_DIR}/db/${SERVICENAME}.db"
 mkdir -p "$(dirname "${KNOWLEDGE_FILE}")" "$(dirname "${DB_FILE}")" "${SHARE_DIR}/work/${SERVICENAME}"
-touch "${KNOWLEDGE_FILE}" "${DB_FILE}"
+if [ ! -f "${KNOWLEDGE_FILE}" ]; then
+  cp "${SCRIPT_DIR}/tools/knowledge_template.md" "${KNOWLEDGE_FILE}"
+fi
+touch "${DB_FILE}"
 
 docker run -d --name "${CONTAINER_NAME}" \
   -e "SERVICE_NAME=${SERVICENAME}" \

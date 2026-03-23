@@ -20,7 +20,8 @@ log() {
 log "Starting analysis for service: ${SERVICE_NAME}"
 
 # 1. Extract unanalyzed log portions
-MAX_EXTRACT_LINES="${1:?Usage: analyze.sh <max_extract_lines>}"
+MAX_EXTRACT_LINES="${1:?Usage: analyze.sh <max_extract_lines> [mention]}"
+MENTION="${2:-}"
 export MAX_EXTRACT_LINES
 
 log "Step 1: Extracting unanalyzed logs (max_lines: ${MAX_EXTRACT_LINES})"
@@ -69,9 +70,13 @@ fi
 COST_DETAIL=$(jq -r 'select(.type == "result") | {cost_usd: .total_cost_usd, turns: .num_turns, duration_ms: .duration_ms, session_id: .session_id}' "${STREAM_LOG}" 2>/dev/null | tail -1)
 log "Usage: ${COST_DETAIL}"
 
-# 4. Send report to Discord
+# 4. Send report to Discord (mention if issues detected)
 log "Step 4: Sending report to Discord"
-/tools/notify-discord.sh "[${SERVICE_NAME}] ${RESULT}" || log "Discord notification failed (ignored)"
+DISCORD_MSG="${RESULT}"
+if [ -n "${MENTION}" ] && ! echo "${RESULT}" | head -c 10 | grep -q '\[OK\]'; then
+  DISCORD_MSG="${MENTION} ${RESULT}"
+fi
+/tools/notify-discord.sh "${DISCORD_MSG}" || log "Discord notification failed (ignored)"
 
 # 5. Commit state (only on success — failed analysis will retry next run)
 log "Step 5: Committing state"
