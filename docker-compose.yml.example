@@ -8,7 +8,7 @@ services:
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_a"
       SSH_PASSPHRASE: "your-passphrase-here"
     volumes:
-      - ./logs:/data/logs
+      - ${SHARE_DIR}/logs:/data/logs
     secrets:
       - ssh_private_key_a
 
@@ -21,7 +21,7 @@ services:
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_b"
       SSH_PASSPHRASE: "your-passphrase-here"
     volumes:
-      - ./logs:/data/logs
+      - ${SHARE_DIR}/logs:/data/logs
     secrets:
       - ssh_private_key_b
 

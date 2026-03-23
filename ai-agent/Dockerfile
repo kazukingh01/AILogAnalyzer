@@ -2,7 +2,7 @@ FROM ubuntu:24.04
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      curl jq git ca-certificates sudo && \
+      curl jq git ca-certificates sudo python3 && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y --no-install-recommends nodejs && \
     npm install -g @anthropic-ai/claude-code && \
@@ -18,11 +18,9 @@ RUN mkdir -p /home/claude/.claude && \
     chown -R claude:claude /home/claude/.claude
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY analyze.sh /usr/local/bin/analyze.sh
-COPY notify-discord.sh /usr/local/bin/notify-discord.sh
-COPY CLAUDE.md /home/claude/CLAUDE.md
-RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/analyze.sh /usr/local/bin/notify-discord.sh && \
-    chown claude:claude /home/claude/CLAUDE.md
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENV PATH="/tools:${PATH}"
 
 USER claude
 WORKDIR /home/claude
@@ -30,6 +28,7 @@ WORKDIR /home/claude
 RUN git config --global user.email "claude@example.com" \
     && git config --global user.name "Claude"
 
-RUN echo 'alias claude="claude --dangerously-skip-permissions"' >> /home/claude/.bashrc
+RUN echo 'export PATH="/tools:$PATH"' >> /home/claude/.bashrc && \
+    echo 'alias claude="claude --dangerously-skip-permissions"' >> /home/claude/.bashrc
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -1,5 +1,5 @@
 [Unit]
-Description=Run AI log analysis every 6 hours
+Description=Run AI log analysis for %i every 6 hours
 
 [Timer]
 OnCalendar=0/6:00:00
