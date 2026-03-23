@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = "/data/db/state.db"
+DB_PATH = "/data/db/db"
 WORK_BASE = "/data/work"
 
 

@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = "/data/db/state.db"
+DB_PATH = "/data/db/db"
 LOG_BASE = "/data/logs"
 WORK_BASE = "/data/work"
 MAX_LINES = int(os.environ.get("MAX_EXTRACT_LINES", "0"))  # 0 = unlimited
@@ -84,7 +84,6 @@ def extract_service(service: str) -> None:
                 f.unlink()
     work_dir.mkdir(parents=True, exist_ok=True)
 
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     init_db(conn)
     state = get_state(conn, service)

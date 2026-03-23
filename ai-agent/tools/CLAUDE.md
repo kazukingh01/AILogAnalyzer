@@ -7,8 +7,8 @@
 | `/data/work/` | 読み書き | extract.py が抽出した差分ログの作業領域。解析対象はここ |
 | `/data/work/_state.json` | 読取専用 | 抽出されたファイルの位置情報（analyze.sh が管理） |
 | `/data/work/_search_result.txt` | 読取専用 | search-logs.sh の事前スキャン結果 |
-| `/data/knowledge/` | 読み書き | 過去の解析で得た知識の永続化領域 |
-| `/data/db/` | 読み書き | SQLite（state.db）による解析済み位置の管理 |
+| `/data/knowledge/knowledge.md` | 読み書き | 過去の解析で得た知識ファイル（単一ファイル） |
+| `/data/db/db` | 読み書き | SQLite による解析済み位置の管理（単一ファイル） |
 | `/tools/` | 読取専用 | ホストからマウントされたツール群 |
 
 ## Role
@@ -17,7 +17,7 @@
 ## 事前知識
 - サービスについての事前知識はありません
 - ログの内容からサービスの実態を把握してください
-- `/data/knowledge/` 配下に過去の知識ファイルがあれば、最初に読んでください
+- `/data/knowledge/knowledge.md` に過去の知識があれば、最初に読んでください
 
 ## 解析対象
 - `/data/work/` 配下のファイル（前回解析以降に追加されたログの差分のみ）
@@ -29,14 +29,13 @@
 解析完了後の状態更新は analyze.sh が自動実行します。手動では実行不要です。
 
 ## 解析手順
-1. `/data/knowledge/` を確認し、過去の知識ファイルがあれば読む
+1. `/data/knowledge/knowledge.md` を確認し、過去の知識があれば読む
 2. `search-logs.sh /data/work/` で error/warning を検索
 3. 検出された箇所の前後を読み、時系列的な観点で状況を把握
 4. 似た時間帯の他のログファイルも確認し、横断的に分析
 5. 分析レポートを出力（最終出力がそのまま Discord に送信される）
-6. 必要に応じて `/data/knowledge/` の知識を更新
+6. 必要に応じて `/data/knowledge/knowledge.md` の知識を更新
    - サービスの特性、ログフォーマット、頻出エラーパターン等
-   - 新規作成・既存更新どちらも可
 
 ## 出力フォーマット
 - 1900文字以内（Discord制限）
@@ -48,4 +47,4 @@
 ## 注意事項
 - `/data/logs/` のファイルは直接読まないこと（`/data/work/` の差分のみ対象）
 - ログファイルの変更・削除は行わないこと
-- `/data/knowledge/` への読み書きは許可されている
+- `/data/knowledge/knowledge.md` への読み書きは許可されている
