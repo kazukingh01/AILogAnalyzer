@@ -1,41 +1,41 @@
-# {{SERVICE_NAME}} 知識ファイル
+# {{SERVICE_NAME}} Knowledge
 
-## サービス概要
-- {{サービスの目的・概要}}
-- {{データソース、接続先等}}
+## Service Overview
+- {{Purpose and overview of the service}}
+- {{Data sources, connection targets, etc.}}
 
-## 主要プロセス
-- **{{process_name}}**: {{説明}}
+## Main Processes
+- **{{process_name}}**: {{description}}
 
-## ログフォーマット
+## Log Format
 ```
-{{ログの形式。例: YYYY-MM-DD HH:MM:SS,mmm - module - function - LEVEL : message}}
+{{Log format. e.g.: YYYY-MM-DD HH:MM:SS,mmm - module - function - LEVEL : message}}
 ```
 
-## 使用ライブラリ
-- {{主要な依存ライブラリ}}
+## Dependencies
+- {{Major libraries and dependencies}}
 
-## 既知のWarning
-- {{無視して良い既知の警告}}
+## Known Warnings
+- {{Known warnings that can be safely ignored}}
 
-## 正常時のログパターン
-- {{正常動作時に出力される典型的なログ}}
+## Normal Log Patterns
+- {{Typical log output during normal operation}}
 
-## ログファイル構成
-- {{ディレクトリとファイルの対応関係}}
+## Log File Structure
+- {{Directory and file mapping}}
 
-## 依存サービス・外部接続先
-- {{DB、API、外部サイト等の接続先情報}}
+## External Services / Connections
+- {{DB, API, external site connection info}}
 
-## エラー発生時の対処法
-- {{過去の対応履歴・復旧手順}}
+## Error Remediation
+- {{Past response history and recovery procedures}}
 
-## 過去のインシデント
-- {{発生日時、事象、原因、対応内容}}
+## Past Incidents
+- {{Date, event, cause, response}}
 
-## 実行スケジュール（推定）
-- {{解析から判明したスケジュール}}
+## Estimated Schedule
+- {{Schedule discovered from analysis}}
 
 ---
-- `{{ }}` で囲まれた箇所は、解析結果にもとづいて自由に編集してください
-- 上記以外の項目も必要に応じて自由に追加してください
+- Edit `{{ }}` placeholders freely based on analysis results
+- Add additional sections as needed
