@@ -59,14 +59,16 @@ Generated automatically by `search-logs.sh | summarize-logs.py` before analysis 
 6. Re-read `/data/knowledge/knowledge.md` and update it if necessary
 
 ## Output Format (max 1900 chars, must be in Japanese)
+The report MUST start with `=== REPORT ===` on its own line. Only content after this marker is sent to Discord.
 ```
-[サービス名] [状態] サマリー1行
+=== REPORT ===
+[service_name] [status] one-line summary
 
-[ERROR] 内容 (ファイル:行番号)
-[WARN] 内容 (ファイル:行番号)
+[ERROR] description (file:line_number)
+[WARN] description (file:line_number)
 ```
-- No issues: `[OK] [サービス名] 異常なし` (`[OK]` must be at the beginning)
-- The report must be written in Japanese
+- No issues: `=== REPORT ===\n[OK] [service_name] 異常なし` (`[OK]` must be at the beginning of the line after the marker)
+- The report content must be written in Japanese
 
 ## Constraints
 - Max 30 turns. Must produce analysis results within 25 turns

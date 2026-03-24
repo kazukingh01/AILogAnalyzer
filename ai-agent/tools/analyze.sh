@@ -40,6 +40,8 @@ if [ -z "${MAX_EXTRACT_LINES}" ]; then
   usage
 fi
 
+log "Args: max_lines=${MAX_EXTRACT_LINES}, mention=$(if [ -n "${MENTION}" ]; then echo "xxxx${MENTION: -4}"; else echo none; fi)"
+
 # 1. Extract unanalyzed log portions
 export MAX_EXTRACT_LINES
 
@@ -87,6 +89,11 @@ if [ -z "${RESULT}" ] || [ "${RESULT}" = "null" ]; then
 fi
 # Remove surrounding quotes from jq output
 RESULT=$(echo "${RESULT}" | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g; s/\\t/\t/g; s/\\"/"/g')
+
+# Extract only content after "=== REPORT ===" marker
+if echo "${RESULT}" | grep -q "=== REPORT ==="; then
+  RESULT=$(echo "${RESULT}" | sed -n '/=== REPORT ===/,$ p' | tail -n +2)
+fi
 
 # Log cost and token usage
 COST_DETAIL=$(jq -r 'select(.type == "result") | {cost_usd: .total_cost_usd, turns: .num_turns, duration_ms: .duration_ms, session_id: .session_id}' "${STREAM_LOG}" 2>/dev/null | tail -1)
