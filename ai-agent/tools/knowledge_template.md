@@ -17,6 +17,10 @@
 
 ## Known Warnings
 - {{Known warnings that can be safely ignored}}
+- Note: WARNING is excluded from the default pre-scan. Not detecting warnings is expected behavior.
+
+## Known Errors
+- {{Known errors that are expected and can be safely ignored}}
 
 ## Normal Log Patterns
 - {{Typical log output during normal operation}}

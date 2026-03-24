@@ -6,7 +6,7 @@
 | `/data/logs/` | read-only | Raw logs mounted from host. Normally use work/ instead |
 | `/data/work/` | read-write | Differential logs extracted by extract.py. Analysis target |
 | `/data/work/_state.json` | read-only | File position info (managed by analyze.sh) |
-| `/data/work/_search_result.txt` | read-only | Pre-scan results from search-logs.sh |
+| `/data/work/_search_result.txt` | read-only | Pre-scan summary (deduplicated, masked) from search-logs.sh + summarize-logs.py |
 | `/data/knowledge/knowledge.md` | read-write | Persistent knowledge file (single file) |
 | `/data/db/db.sqlite` | read-write | SQLite for tracking analyzed positions |
 | `/tools/` | read-only | Tool scripts mounted from host |
@@ -27,6 +27,28 @@ You are a log analysis agent. Analyze service logs, detect warnings/errors/anoma
 
 ### commit.py
 State update after analysis is auto-executed by analyze.sh. Do not run manually.
+
+## Pre-scan Result (`_search_result.txt`)
+Generated automatically by `search-logs.sh | summarize-logs.py` before analysis starts.
+
+**How it is created:**
+1. `search-logs.sh` greps `/data/work/` for error keywords with 3 lines of context. WARNING is excluded by default.
+2. `summarize-logs.py` deduplicates the grep output: masks dates/numbers/IDs, groups identical patterns, and outputs a hierarchical summary.
+
+**Output format:**
+```
+=== filepath ===
+  [Nx] lines:123,456,789
+    | masked log line (match line)
+    | context line
+    [Mx] lines:123,456           ← sub-group (different context)
+      + differing context line
+```
+- `[Nx]`: number of occurrences of this pattern
+- `lines:`: original line numbers in the log file (up to 5, then `...(+N)`)
+- `| ...`: masked log lines that are common to all occurrences
+- `+ ...`: lines that differ from the parent group (sub-group only)
+- Dates → `<DATE>`, numbers → `<N>`, UUIDs → `<UUID>`, long tokens (40+ chars) → `<LONG>`
 
 ## Analysis Steps
 1. Check `/data/knowledge/knowledge.md` and read past knowledge if available

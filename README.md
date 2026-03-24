@@ -34,6 +34,7 @@ sudo docker compose up && sudo docker compose down
 SERVICE_NAME=xxxxx
 sudo docker exec -t ailog-agent-${SERVICE_NAME} /tools/analyze.sh --max-lines 100000 --mention "<@12345678901234567890>"
 sudo docker exec -t ailog-agent-${SERVICE_NAME} python3 /tools/status.py --all
+sudo docker exec -t ailog-agent-${SERVICE_NAME} bash -c '/tools/search-logs.sh /data/logs/ 2>/dev/null | python3 /tools/summarize-logs.py -' > ./tmp.summary 2>&1
 ```
 
 ## Schedule
@@ -43,4 +44,8 @@ sudo bash ./systemd/install.sh
 # sudo systemctl start ailog-sync.service
 # sudo journalctl -u ailog-sync.timer
 # sudo journalctl -u ailog-sync.service
+```
+
+```bash
+sudo bash ./systemd/register-agent.sh ${SERVICE_NAME}
 ```

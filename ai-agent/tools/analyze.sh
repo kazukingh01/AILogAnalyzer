@@ -62,8 +62,8 @@ fi
 
 # 2. Pre-scan for errors/warnings
 SEARCH_RESULT="/data/work/_search_result.txt"
-log "Step 2: Pre-scanning logs with search-logs.sh"
-/tools/search-logs.sh "${WORK_DIR}" > "${SEARCH_RESULT}" 2>&1 || true
+log "Step 2: Pre-scanning logs with search-logs.sh + summarize-logs.py"
+/tools/search-logs.sh "${WORK_DIR}" 2>/dev/null | python3 /tools/summarize-logs.py - > "${SEARCH_RESULT}" 2>&1 || true
 log "Search result: $(wc -l < "${SEARCH_RESULT}") lines"
 
 # 3. Run Claude analysis
@@ -80,10 +80,13 @@ claude -p "Analyze the log files for service '${SERVICE_NAME}'. Follow the instr
 }
 
 # Extract final result and usage from stream
-RESULT=$(jq -r 'select(.type == "result") | .result' "${STREAM_LOG}" | tail -1)
-if [ -z "${RESULT}" ]; then
-  RESULT=$(jq -r 'select(.message?.role == "assistant") | .message.content[]? | select(.type == "text") | .text' "${STREAM_LOG}" | tail -1)
+# Use slurp to get the last "result" record as a whole (not last line)
+RESULT=$(jq -s '[.[] | select(.type == "result")] | last | .result' "${STREAM_LOG}" 2>/dev/null)
+if [ -z "${RESULT}" ] || [ "${RESULT}" = "null" ]; then
+  RESULT=$(jq -s '[.[] | select(.message?.role == "assistant") | .message.content[]? | select(.type == "text") | .text] | last' "${STREAM_LOG}" 2>/dev/null)
 fi
+# Remove surrounding quotes from jq output
+RESULT=$(echo "${RESULT}" | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g; s/\\t/\t/g; s/\\"/"/g')
 
 # Log cost and token usage
 COST_DETAIL=$(jq -r 'select(.type == "result") | {cost_usd: .total_cost_usd, turns: .num_turns, duration_ms: .duration_ms, session_id: .session_id}' "${STREAM_LOG}" 2>/dev/null | tail -1)
