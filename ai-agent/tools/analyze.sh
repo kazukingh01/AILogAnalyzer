@@ -83,12 +83,10 @@ claude -p "Analyze the log files for service '${SERVICE_NAME}'. Follow the instr
 
 # Extract final result and usage from stream
 # Use slurp to get the last "result" record as a whole (not last line)
-RESULT=$(jq -s '[.[] | select(.type == "result")] | last | .result' "${STREAM_LOG}" 2>/dev/null)
+RESULT=$(jq -s -r '[.[] | select(.type == "result")] | last | .result' "${STREAM_LOG}" 2>/dev/null)
 if [ -z "${RESULT}" ] || [ "${RESULT}" = "null" ]; then
-  RESULT=$(jq -s '[.[] | select(.message?.role == "assistant") | .message.content[]? | select(.type == "text") | .text] | last' "${STREAM_LOG}" 2>/dev/null)
+  RESULT=$(jq -s -r '[.[] | select(.message?.role == "assistant") | .message.content[]? | select(.type == "text") | .text] | last' "${STREAM_LOG}" 2>/dev/null)
 fi
-# Remove surrounding quotes from jq output
-RESULT=$(echo "${RESULT}" | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g; s/\\t/\t/g; s/\\"/"/g')
 
 # Extract only content after "=== REPORT ===" marker
 if echo "${RESULT}" | grep -q "=== REPORT ==="; then
