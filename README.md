@@ -48,4 +48,7 @@ sudo bash ./systemd/install.sh
 
 ```bash
 sudo bash ./systemd/register-agent.sh ${SERVICE_NAME}
+# sudo systemctl start ailog-agent-${SERVICE_NAME}.service
+# sudo journalctl -u ailog-agent-${SERVICE_NAME}.timer
+# sudo journalctl -u ailog-agent-${SERVICE_NAME}.service
 ```
