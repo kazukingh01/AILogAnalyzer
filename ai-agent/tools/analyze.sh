@@ -73,7 +73,7 @@ log "Usage: ${COST_DETAIL}"
 # 4. Send report to Discord (mention if issues detected)
 log "Step 4: Sending report to Discord"
 DISCORD_MSG="${RESULT}"
-if [ -n "${MENTION}" ] && ! echo "${RESULT}" | head -c 10 | grep -q '\[OK\]'; then
+if [ -n "${MENTION}" ] && ! echo "${RESULT}" | head -n 1 | grep -q '^\[OK\]'; then
   DISCORD_MSG="${MENTION} ${RESULT}"
 fi
 /tools/notify-discord.sh "${DISCORD_MSG}" || log "Discord notification failed (ignored)"
