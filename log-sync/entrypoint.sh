@@ -12,6 +12,11 @@ HOST=$(echo "${RSYNC_SRC}" | cut -d@ -f2 | cut -d: -f1)
 PORT="${SSH_PORT:-22}"
 ssh-keyscan -p "${PORT}" "${HOST}" >> /root/.ssh/known_hosts 2>/dev/null
 
+# Read passphrase from secrets file or environment variable
+if [ -n "${SSH_PASSPHRASE_FILE:-}" ] && [ -f "${SSH_PASSPHRASE_FILE}" ]; then
+  SSH_PASSPHRASE=$(cat "${SSH_PASSPHRASE_FILE}")
+fi
+
 # Create SSH_ASKPASS helper only if passphrase is provided
 if [ -n "${SSH_PASSPHRASE:-}" ]; then
   printf '%s\n' "${SSH_PASSPHRASE}" > /usr/local/bin/.ssh_passphrase

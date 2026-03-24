@@ -1,5 +1,21 @@
 # AILogAnalyzer
 
+## Prepare
+
+```bash
+cp ./docker-compose.yml.example ./docker-compose.yml
+```
+
+edit.
+
+```bash
+vi ./docker-compose.yml
+touch ./secrets/ssh_passphrase_a && chmod 600 ./secrets/ssh_passphrase_a
+vi ./secrets/ssh_passphrase_a
+```
+
+## Run
+
 ```bash
 sudo docker compose up && sudo docker compose down
 ```
