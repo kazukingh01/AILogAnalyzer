@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = "/data/db/db"
+DB_PATH = "/data/db/db.sqlite"
 LOG_BASE = "/data/logs"
 WORK_BASE = "/data/work"
 MAX_LINES = int(os.environ.get("MAX_EXTRACT_LINES", "0"))  # 0 = unlimited

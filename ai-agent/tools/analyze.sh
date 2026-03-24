@@ -19,9 +19,28 @@ log() {
 
 log "Starting analysis for service: ${SERVICE_NAME}"
 
+# Parse arguments
+usage() {
+  echo "Usage: analyze.sh --max-lines <N> [--mention <mention>]" >&2
+  exit 1
+}
+
+MAX_EXTRACT_LINES=""
+MENTION=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --max-lines) MAX_EXTRACT_LINES="${2:?--max-lines requires a value}"; shift 2 ;;
+    --mention)   MENTION="${2:?--mention requires a value}"; shift 2 ;;
+    *)           usage ;;
+  esac
+done
+
+if [ -z "${MAX_EXTRACT_LINES}" ]; then
+  usage
+fi
+
 # 1. Extract unanalyzed log portions
-MAX_EXTRACT_LINES="${1:?Usage: analyze.sh <max_extract_lines> [mention]}"
-MENTION="${2:-}"
 export MAX_EXTRACT_LINES
 
 log "Step 1: Extracting unanalyzed logs (max_lines: ${MAX_EXTRACT_LINES})"

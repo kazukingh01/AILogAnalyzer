@@ -6,7 +6,6 @@ Requires=docker.service
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/AILogAnalyzer
-# Usage: analyze.sh <max_extract_lines> [mention]
-# Example: analyze.sh 100000 @admin
-ExecStart=/usr/bin/docker exec -T ailog-agent-%i /tools/analyze.sh 100000
+# Usage: analyze.sh --max-lines <N> [--mention <mention>]
+ExecStart=/usr/bin/docker exec -T ailog-agent-%i /tools/analyze.sh --max-lines 100000
 TimeoutStartSec=600

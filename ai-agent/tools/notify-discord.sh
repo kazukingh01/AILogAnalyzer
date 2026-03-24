@@ -12,14 +12,18 @@ fi
 # Use jq for safe JSON escaping
 PAYLOAD=$(jq -n --arg content "${MESSAGE}" '{"content": $content}')
 
-curl -s -o /dev/null -w "%{http_code}" \
+RESPONSE=$(mktemp)
+HTTP_CODE=$(curl -s -o "${RESPONSE}" -w "%{http_code}" \
   -H "Content-Type: application/json" \
   -d "${PAYLOAD}" \
-  "${WEBHOOK_URL}" | {
-  read -r HTTP_CODE
-  if [ "${HTTP_CODE}" -ge 400 ]; then
-    echo "[$(date -Iseconds)] Discord webhook failed with HTTP ${HTTP_CODE}" >&2
-    exit 1
-  fi
-  echo "[$(date -Iseconds)] Discord notification sent (HTTP ${HTTP_CODE})"
-}
+  "${WEBHOOK_URL}")
+
+if [ "${HTTP_CODE}" -ge 400 ]; then
+  BODY=$(cat "${RESPONSE}")
+  echo "[$(date -Iseconds)] Discord webhook failed: HTTP ${HTTP_CODE} body=${BODY} msg_length=${#MESSAGE}" >&2
+  rm -f "${RESPONSE}"
+  exit 1
+fi
+
+echo "[$(date -Iseconds)] Discord notification sent (HTTP ${HTTP_CODE})"
+rm -f "${RESPONSE}"

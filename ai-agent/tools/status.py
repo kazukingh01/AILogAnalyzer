@@ -5,7 +5,7 @@ import argparse
 import sqlite3
 from datetime import datetime, timezone
 
-DB_PATH = "/data/db/db"
+DB_PATH = "/data/db/db.sqlite"
 
 
 def show_status(service: str | None = None, show_all: bool = False) -> None:

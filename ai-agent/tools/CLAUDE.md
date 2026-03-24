@@ -8,7 +8,7 @@
 | `/data/work/_state.json` | read-only | File position info (managed by analyze.sh) |
 | `/data/work/_search_result.txt` | read-only | Pre-scan results from search-logs.sh |
 | `/data/knowledge/knowledge.md` | read-write | Persistent knowledge file (single file) |
-| `/data/db/db` | read-write | SQLite for tracking analyzed positions (single file) |
+| `/data/db/db.sqlite` | read-write | SQLite for tracking analyzed positions |
 | `/tools/` | read-only | Tool scripts mounted from host |
 
 ## Role
