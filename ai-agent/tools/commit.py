@@ -13,7 +13,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-DB_PATH = "/data/db/state.db"
+DB_PATH = "/data/db/db.sqlite"
 WORK_BASE = "/data/work"
 
 
@@ -49,7 +49,7 @@ def commit_service(service: str) -> None:
     conn.close()
 
     # Clean up work directory (keep log files)
-    keep_files = {"analyze.log", "claude_stream.jsonl"}
+    keep_files = {"analyze.log", "claude_stream.jsonl", "_state.json", "_search_result.txt"}
     for item in work_dir.rglob("*"):
         if item.is_file() and item.name not in keep_files:
             item.unlink()

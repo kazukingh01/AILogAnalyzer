@@ -2,24 +2,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 
-echo "Installing systemd units..."
-cp "${SCRIPT_DIR}"/ailog-*.service "${SCRIPT_DIR}"/ailog-*.timer /etc/systemd/system/
+echo "Installing systemd units (WorkingDirectory=${PROJECT_DIR})..."
+for f in "${SCRIPT_DIR}"/ailog-sync.service "${SCRIPT_DIR}"/ailog-sync.timer; do
+  sed "s|WorkingDirectory=.*|WorkingDirectory=${PROJECT_DIR}|" "$f" > "/etc/systemd/system/$(basename "$f")"
+done
 
 echo "Reloading systemd..."
 systemctl daemon-reload
 
 echo "Enabling and starting timers..."
-systemctl enable --now ailog-sync-webserver.timer
-
-# Enable ai-agent timers per service (add more as needed)
-# Usage: systemctl enable --now ailog-agent@service-a.timer
-echo ""
-echo "To enable ai-agent for a service, run:"
-echo "  systemctl enable --now ailog-agent@<service-name>.timer"
-echo ""
-echo "Example:"
-echo "  systemctl enable --now ailog-agent@service-a.timer"
-echo "  systemctl enable --now ailog-agent@service-b.timer"
-echo ""
-echo "Check status with: systemctl list-timers ailog-*"
+systemctl enable --now ailog-sync.timer

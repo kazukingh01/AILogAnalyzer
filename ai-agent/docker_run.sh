@@ -28,12 +28,21 @@ if [ "${DELETE}" = true ]; then
   echo "Removing image: ${IMAGE_NAME}"
   docker rmi "${IMAGE_NAME}" 2>/dev/null || true
   echo "Removing data: db, knowledge, work for ${SERVICENAME}"
-  rm -rf "${SHARE_DIR}/db/${SERVICENAME}" "${SHARE_DIR}/knowledge/${SERVICENAME}" "${SHARE_DIR}/work/${SERVICENAME}"
+  rm -rf "${SHARE_DIR}/db/${SERVICENAME}" "${SHARE_DIR}/knowledge/${SERVICENAME}.md"
+  rm -rf "${SHARE_DIR}/work/${SERVICENAME}"
 fi
 
 docker build -t "${IMAGE_NAME}" ./ai-agent
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Ensure single files exist before mounting
+KNOWLEDGE_FILE="${SHARE_DIR}/knowledge/${SERVICENAME}.md"
+DB_DIR="${SHARE_DIR}/db/${SERVICENAME}"
+mkdir -p "$(dirname "${KNOWLEDGE_FILE}")" "${DB_DIR}" "${SHARE_DIR}/work/${SERVICENAME}"
+if [ ! -f "${KNOWLEDGE_FILE}" ]; then
+  cp "${SCRIPT_DIR}/tools/knowledge_template.md" "${KNOWLEDGE_FILE}"
+fi
 
 docker run -d --name "${CONTAINER_NAME}" \
   -e "SERVICE_NAME=${SERVICENAME}" \
@@ -41,13 +50,13 @@ docker run -d --name "${CONTAINER_NAME}" \
   -v "${SCRIPT_DIR}/tools:/tools:ro" \
   -v "${SHARE_DIR}/logs/${SERVICENAME}:/data/logs/:ro" \
   -v "${SHARE_DIR}/work/${SERVICENAME}:/data/work/" \
-  -v "${SHARE_DIR}/knowledge/${SERVICENAME}:/data/knowledge" \
-  -v "${SHARE_DIR}/db/${SERVICENAME}:/data/db" \
+  -v "${KNOWLEDGE_FILE}:/data/knowledge/knowledge.md" \
+  -v "${DB_DIR}:/data/db/" \
   "${IMAGE_NAME}"
 
 # Fix ownership of mounted volumes to match container's claude user
 CLAUDE_UID=$(docker exec "${CONTAINER_NAME}" id -u claude)
 CLAUDE_GID=$(docker exec "${CONTAINER_NAME}" id -g claude)
-docker exec -u root "${CONTAINER_NAME}" chown -R "${CLAUDE_UID}:${CLAUDE_GID}" /data/work /data/knowledge /data/db
+docker exec -u root "${CONTAINER_NAME}" chown -R "${CLAUDE_UID}:${CLAUDE_GID}" /data/work /data/knowledge/knowledge.md /data/db
 
 docker exec -it -u claude "${CONTAINER_NAME}" claude --dangerously-skip-permissions

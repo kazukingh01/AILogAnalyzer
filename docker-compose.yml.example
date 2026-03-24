@@ -6,11 +6,12 @@ services:
       DIR_LOGS: "serviceA"
       SSH_PORT: "22"
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_a"
-      SSH_PASSPHRASE: "your-passphrase-here"
+      SSH_PASSPHRASE_FILE: "/run/secrets/ssh_passphrase_a"
     volumes:
       - ${SHARE_DIR}/logs:/data/logs
     secrets:
       - ssh_private_key_a
+      - ssh_passphrase_a
 
   log-sync-service-b:
     build: ./log-sync
@@ -19,14 +20,19 @@ services:
       DIR_LOGS: "serviceB"
       SSH_PORT: "22"
       SSH_KEY_FILE: "/run/secrets/ssh_private_key_b"
-      SSH_PASSPHRASE: "your-passphrase-here"
+      SSH_PASSPHRASE_FILE: "/run/secrets/ssh_passphrase_b"
     volumes:
       - ${SHARE_DIR}/logs:/data/logs
     secrets:
       - ssh_private_key_b
+      - ssh_passphrase_b
 
 secrets:
   ssh_private_key_a:
     file: ./secrets/ssh_private_key_a
   ssh_private_key_b:
     file: ./secrets/ssh_private_key_b
+  ssh_passphrase_a:
+    file: ./secrets/ssh_passphrase_a
+  ssh_passphrase_b:
+    file: ./secrets/ssh_passphrase_b
