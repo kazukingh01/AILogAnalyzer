@@ -26,7 +26,7 @@ if [ -z "${SERVICE_NAME}" ]; then
   echo "" >&2
   echo "Options:" >&2
   echo "  --max-lines N      Max lines to extract (default: 0 = unlimited)" >&2
-  echo "  --interval <cal>   systemd OnCalendar expression (default: '0/6:00:00' = every 6h)" >&2
+  echo "  --interval <cal>   systemd OnCalendar expression (default: '*:0/30:00' = every 30min)" >&2
   echo "" >&2
   echo "DISCORD_MENTION is read from .env (e.g. DISCORD_MENTION=<@123456789>)" >&2
   exit 1
