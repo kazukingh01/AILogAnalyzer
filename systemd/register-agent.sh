@@ -34,11 +34,6 @@ fi
 
 UNIT_NAME="ailog-agent-${SERVICE_NAME}"
 
-# Build analyze.sh arguments
-ANALYZE_ARGS="--max-lines ${MAX_LINES}"
-# DISCORD_MENTION is passed via EnvironmentFile; append --mention only if set
-MENTION_ARG='$(if [ -n "${DISCORD_MENTION:-}" ]; then echo "--mention ${DISCORD_MENTION}"; fi)'
-
 echo "Creating ${UNIT_NAME}.service ..."
 cat > "/etc/systemd/system/${UNIT_NAME}.service" <<EOF
 [Unit]
@@ -50,7 +45,7 @@ Requires=docker.service
 Type=oneshot
 WorkingDirectory=${PROJECT_DIR}
 EnvironmentFile=${PROJECT_DIR}/.env
-ExecStart=/bin/bash -c '/usr/bin/docker exec -T ailog-agent-${SERVICE_NAME} /tools/analyze.sh ${ANALYZE_ARGS} \$(if [ -n "\${DISCORD_MENTION:-}" ]; then echo "--mention \"\${DISCORD_MENTION}\""; fi)'
+ExecStart=${PROJECT_DIR}/systemd/run-agent.sh ${SERVICE_NAME} ${MAX_LINES}
 TimeoutStartSec=600
 EOF
 
