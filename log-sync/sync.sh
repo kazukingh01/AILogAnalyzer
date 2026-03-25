@@ -13,7 +13,7 @@ mkdir -p "${DEST}"
 
 echo "[$(date -Iseconds)] Starting rsync: ${RSYNC_SRC} -> ${DEST}"
 
-rsync -avz --delete \
+rsync -avzL --delete \
   -e "ssh -i /root/.ssh/id_rsa -p ${PORT}" \
   "${RSYNC_SRC}" "${DEST}/"
 

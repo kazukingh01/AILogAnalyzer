@@ -32,17 +32,19 @@ def commit_service(service: str) -> None:
     now = int(datetime.now(timezone.utc).timestamp())
 
     for entry in state["files"]:
+        file_head = entry.get("file_head", "")
         conn.execute(
             """
-            INSERT INTO log_state (service, filepath, last_line, total_lines, last_size, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO log_state (service, filepath, last_line, total_lines, last_size, updated_at, file_head)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (service, filepath)
             DO UPDATE SET last_line = excluded.last_line,
                           total_lines = excluded.total_lines,
                           last_size = excluded.last_size,
-                          updated_at = excluded.updated_at
+                          updated_at = excluded.updated_at,
+                          file_head = excluded.file_head
             """,
-            (service, entry["filepath"], entry["last_line"], entry["total_lines"], entry["last_size"], now),
+            (service, entry["filepath"], entry["last_line"], entry["total_lines"], entry["last_size"], now, file_head),
         )
 
     conn.commit()
