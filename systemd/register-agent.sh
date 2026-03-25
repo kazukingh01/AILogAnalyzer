@@ -10,23 +10,26 @@ PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 
 SERVICE_NAME=""
 MAX_LINES=0
-INTERVAL="*:0/30:00"
+INTERVAL="*-*-* 0/1:00:00"
+PATTERN="*.log"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --max-lines) MAX_LINES="$2"; shift 2 ;;
     --interval)  INTERVAL="$2"; shift 2 ;;
+    --pattern)   PATTERN="$2"; shift 2 ;;
     -*)          echo "Unknown option: $1" >&2; exit 1 ;;
     *)           SERVICE_NAME="$1"; shift ;;
   esac
 done
 
 if [ -z "${SERVICE_NAME}" ]; then
-  echo "Usage: register-agent.sh <service_name> [--max-lines N] [--interval <calendar>]" >&2
+  echo "Usage: register-agent.sh <service_name> [--max-lines N] [--interval <calendar>] [--pattern <glob>]" >&2
   echo "" >&2
   echo "Options:" >&2
   echo "  --max-lines N      Max lines to extract (default: 0 = unlimited)" >&2
-  echo "  --interval <cal>   systemd OnCalendar expression (default: '*:0/30:00' = every 30min)" >&2
+  echo "  --interval <cal>   systemd OnCalendar expression (default: '*-*-* 0/1:00:00' = every 1h)" >&2
+  echo "  --pattern <glob>   File pattern to extract (default: '*.log')" >&2
   echo "" >&2
   echo "DISCORD_MENTION is read from .env (e.g. DISCORD_MENTION=<@123456789>)" >&2
   exit 1
@@ -45,7 +48,7 @@ Requires=docker.service
 Type=oneshot
 WorkingDirectory=${PROJECT_DIR}
 EnvironmentFile=${PROJECT_DIR}/.env
-ExecStart=${PROJECT_DIR}/systemd/run-agent.sh ${SERVICE_NAME} ${MAX_LINES}
+ExecStart=${PROJECT_DIR}/systemd/run-agent.sh ${SERVICE_NAME} ${MAX_LINES} ${PATTERN}
 TimeoutStartSec=600
 EOF
 
