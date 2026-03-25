@@ -48,7 +48,7 @@ Requires=docker.service
 Type=oneshot
 WorkingDirectory=${PROJECT_DIR}
 EnvironmentFile=${PROJECT_DIR}/.env
-ExecStart=${PROJECT_DIR}/systemd/run-agent.sh ${SERVICE_NAME} ${MAX_LINES} ${PATTERN}
+ExecStart=${PROJECT_DIR}/systemd/run-agent.sh "${SERVICE_NAME}" "${MAX_LINES}" "${PATTERN}"
 TimeoutStartSec=600
 EOF
 

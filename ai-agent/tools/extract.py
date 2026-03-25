@@ -182,6 +182,7 @@ def extract_service(service: str, keep_files: set[str] | None = None) -> None:
 
         file_size = log_file.stat().st_size
         prev = state.get(rel_path)
+        generations = []
 
         if prev is not None:
             current_lines = read_file_lines(log_file)
@@ -229,8 +230,7 @@ def extract_service(service: str, keep_files: set[str] | None = None) -> None:
                     if MAX_LINES > 0:
                         print(
                             f"    -> MAX_LINES={MAX_LINES} is set, skipping generation search, "
-                            f"reading current file from beginning",
-                            file=sys.stderr,
+                            f"reading current file from beginning"
                         )
                         new_lines = current_lines
                         processed_up_to = actual_total
