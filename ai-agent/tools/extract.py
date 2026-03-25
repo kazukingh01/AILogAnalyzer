@@ -136,7 +136,7 @@ def is_logrotate_target(log_dir: Path, rel_path: str) -> bool:
     return ROTATE_GEN_RE.match(rel_path) is not None
 
 
-def extract_service(service: str) -> None:
+def extract_service(service: str, keep_files: set[str] | None = None) -> None:
     log_dir = Path(LOG_BASE)
     work_dir = Path(WORK_BASE)
 
@@ -144,8 +144,9 @@ def extract_service(service: str) -> None:
         print(f"Log directory not found: {log_dir}", file=sys.stderr)
         sys.exit(1)
 
-    # Clean previous work files (keep log files used by analyze.sh)
-    keep_files = {"analyze.log", "claude_stream.jsonl"}
+    # Clean previous work files (keep specified files)
+    if keep_files is None:
+        keep_files = {"analyze.log", "claude_stream.jsonl"}
     if work_dir.exists():
         for f in work_dir.rglob("*"):
             if f.is_file() and f.name not in keep_files:
@@ -182,107 +183,106 @@ def extract_service(service: str) -> None:
         file_size = log_file.stat().st_size
         prev = state.get(rel_path)
 
-        # Detect logrotate generations for this file
-        generations = find_rotated_generations(log_dir, rel_path)
-
-        if generations and prev is not None and prev.get("file_head"):
-            # --- Logrotate-aware extraction ---
+        if prev is not None:
             current_lines = read_file_lines(log_file)
+            if not current_lines:
+                continue
+            actual_total = len(current_lines)
+            prev_head = prev.get("file_head", "")
             current_head = get_file_head(current_lines)
-            prev_head = prev["file_head"]
 
-            no_rotation = (
-                current_head == prev_head
-                and file_size >= prev["last_size"]
-            )
-            if no_rotation:
+            # Determine if rotation/reset occurred
+            head_ok = prev_head and current_head == prev_head
+            size_ok = file_size >= prev["last_size"]
+            lines_ok = actual_total >= prev["last_line"]
+
+            # Determine head status string for logging
+            if not prev_head:
+                head_status = "head=N/A(no prev)"
+            elif current_head == prev_head:
+                head_status = "head=match"
+            else:
+                head_status = "head=MISMATCH"
+
+            if head_ok and size_ok:
                 # No rotation — normal incremental extraction
                 new_lines, processed_up_to = _extract_incremental(
                     current_lines, prev["last_line"]
                 )
                 print(
-                    f"  {rel_path}: head=match, no rotation, "
-                    f"lines {prev['last_line']}->{len(current_lines)}, "
+                    f"  {rel_path}: {head_status}, no rotation, "
+                    f"lines {prev['last_line']}->{actual_total}, "
                     f"extracting {len(new_lines)} lines"
                 )
             else:
-                # Rotation detected — search generations for previous head
-                assert MAX_LINES == 0, (
-                    "MAX_EXTRACT_LINES must be 0 (unlimited) when logrotate generations "
-                    "are present, to avoid partial extraction across generations."
-                )
-                head_match = "head=MISMATCH" if current_head != prev_head else "size=shrunk"
-                gen_names = [f".{g[0]}{'.gz' if g[1].suffix == '.gz' else ''}" for g in generations]
-                print(
-                    f"  {rel_path}: {head_match}, rotation detected, "
-                    f"generations={gen_names}"
-                )
+                # Rotation or reset detected — check for logrotate generations
+                generations = find_rotated_generations(log_dir, rel_path)
 
-                matched_gen = None
-                matched_lines = None
-                for gen_num, gen_path in generations:
-                    gen_lines = read_file_lines(gen_path)
-                    gen_head = get_file_head(gen_lines)
-                    if gen_head == prev_head:
-                        matched_gen = gen_num
-                        matched_lines = gen_lines
-                        break
-
-                if matched_lines is not None:
-                    # Concatenate: matched_gen (from last_line) + newer gens + current
-                    remaining_in_gen = len(matched_lines) - prev["last_line"]
-                    combined = matched_lines[prev["last_line"]:]
-                    newer_gens_lines = 0
-                    for gen_num, gen_path in generations:
-                        if gen_num < matched_gen:
-                            gl = read_file_lines(gen_path)
-                            newer_gens_lines += len(gl)
-                            combined.extend(gl)
-                    combined.extend(current_lines)
-                    new_lines = combined
+                if generations and prev_head:
+                    # Search generations for previous head
+                    gen_names = [f".{g[0]}{'.gz' if g[1].suffix == '.gz' else ''}" for g in generations]
                     print(
-                        f"    -> matched generation .{matched_gen}, "
-                        f"prev_last_line={prev['last_line']}, "
-                        f"remaining_in_gen={remaining_in_gen}, "
-                        f"newer_gens_lines={newer_gens_lines}, "
-                        f"current_lines={len(current_lines)}, "
-                        f"total_extracting={len(new_lines)}"
+                        f"  {rel_path}: {head_status}, rotation detected, "
+                        f"generations={gen_names}"
                     )
+
+                    if MAX_LINES > 0:
+                        print(
+                            f"    -> MAX_LINES={MAX_LINES} is set, skipping generation search, "
+                            f"reading current file from beginning",
+                            file=sys.stderr,
+                        )
+                        new_lines = current_lines
+                        processed_up_to = actual_total
+                    else:
+                        matched_gen = None
+                        matched_lines = None
+                        for gen_num, gen_path in generations:
+                            gen_lines = read_file_lines(gen_path)
+                            gen_head = get_file_head(gen_lines)
+                            if gen_head == prev_head:
+                                matched_gen = gen_num
+                                matched_lines = gen_lines
+                                break
+
+                        if matched_lines is not None:
+                            # Concatenate: matched_gen (from last_line) + newer gens + current
+                            remaining_in_gen = len(matched_lines) - prev["last_line"]
+                            combined = matched_lines[prev["last_line"]:]
+                            newer_gens_lines = 0
+                            for gen_num, gen_path in generations:
+                                if gen_num < matched_gen:
+                                    gl = read_file_lines(gen_path)
+                                    newer_gens_lines += len(gl)
+                                    combined.extend(gl)
+                            combined.extend(current_lines)
+                            new_lines = combined
+                            print(
+                                f"    -> matched generation .{matched_gen}, "
+                                f"prev_last_line={prev['last_line']}, "
+                                f"remaining_in_gen={remaining_in_gen}, "
+                                f"newer_gens_lines={newer_gens_lines}, "
+                                f"current_lines={len(current_lines)}, "
+                                f"total_extracting={len(new_lines)}"
+                            )
+                        else:
+                            new_lines = current_lines
+                            print(
+                                f"    -> no matching generation, starting fresh, "
+                                f"extracting {len(new_lines)} lines"
+                            )
+
+                        processed_up_to = len(current_lines)
                 else:
-                    new_lines = current_lines
+                    # No generations or no prev head — simple reset
                     print(
-                        f"    -> no matching generation, starting fresh, "
-                        f"extracting {len(new_lines)} lines"
+                        f"  {rel_path}: {head_status}, reset (size {prev['last_size']}->{file_size}, "
+                        f"lines {prev['last_line']}->{actual_total}), "
+                        f"reading from beginning, extracting {actual_total} lines"
+                        f"{' (no logrotate generations found)' if not generations else ''}"
                     )
-
-                processed_up_to = len(current_lines)
-
-            actual_total = len(current_lines)
-        elif prev is not None:
-            # --- Normal (non-logrotate) extraction ---
-            current_lines = read_file_lines(log_file)
-            if not current_lines:
-                continue
-            actual_total = len(current_lines)
-
-            start_line = 0
-            if file_size < prev["last_size"] or actual_total < prev["last_line"]:
-                print(
-                    f"  {rel_path}: reset (size {prev['last_size']}->{file_size}, "
-                    f"lines {prev['last_line']}->{actual_total}), "
-                    f"reading from beginning, extracting {actual_total} lines"
-                )
-                start_line = 0
-            else:
-                start_line = prev["last_line"]
-
-            new_lines, processed_up_to = _extract_incremental(current_lines, start_line)
-            if new_lines:
-                print(
-                    f"  {rel_path}: incremental, "
-                    f"lines {start_line}->{actual_total}, "
-                    f"extracting {len(new_lines)} lines"
-                )
+                    new_lines = current_lines
+                    processed_up_to = actual_total
         else:
             # --- First time seeing this file ---
             current_lines = read_file_lines(log_file)
