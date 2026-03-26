@@ -35,7 +35,7 @@ if [ ! -d "${DIR}" ]; then
   exit 1
 fi
 
-EXCLUDE="--exclude=_state.json --exclude=_search_result.txt"
+EXCLUDE="--include=*.log --exclude=analyze.log --exclude=_state.json --exclude=_search_result.txt"
 
 # Tier 1: High-confidence keywords (case-insensitive)
 PATTERN_NOCASE="fatal|exception|critical|panic|emergency|severe|traceback|segfault|segmentation fault|out of memory|oom"

@@ -74,6 +74,7 @@ log "Search result: $(wc -l < "${SEARCH_RESULT}") lines"
 # 3. Run Claude analysis
 log "Step 3: Running Claude analysis (${FILE_COUNT} files)"
 claude -p "Analyze the log files for service '${SERVICE_NAME}'. Follow the instructions in CLAUDE.md." \
+  --model sonnet \
   --dangerously-skip-permissions \
   --max-turns 30 \
   --output-format stream-json \
