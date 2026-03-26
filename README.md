@@ -1,5 +1,59 @@
 # AILogAnalyzer
 
+## Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│ Host (systemd timers)                                              │
+│                                                                    │
+│  ┌──────────────────────────────────────────┐                      │
+│  │ ailog-sync.timer (every 30min)           │                      │
+│  │                                          │                      │
+│  │  docker compose up / down                │                      │
+│  │    ┌────────────────────┐                │                      │
+│  │    │ log-sync-service-a │──rsync+SSH──→ Remote Server A         │
+│  │    └────────┬───────────┘                │                      │
+│  │    ┌────────────────────┐                │                      │
+│  │    │ log-sync-service-b │──rsync+SSH──→ Remote Server B         │
+│  │    └────────┬───────────┘                │                      │
+│  │             │                            │                      │
+│  └─────────────┼────────────────────────────┘                      │
+│                ▼                                                   │
+│  ┌──────────────────────────────────────────┐                      │
+│  │ Shared Volume: ${SHARE_DIR}/logs/        │                      │
+│  │   ├── serviceA/  *.log, *.log.1.gz ...   │                      │
+│  │   └── serviceB/  *.log, *.log.1.gz ...   │                      │
+│  └──────────┬──────────────┬────────────────┘                      │
+│             │              │                                       │
+│  ┌──────────▼───────┐  ┌───▼────────────────┐                      │
+│  │ ailog-agent-     │  │ ailog-agent-       │  ← docker run        │
+│  │   service-a      │  │   service-b        │    (long-running)    │
+│  │ ┌──────────────┐ │  │ ┌──────────────┐   │                      │
+│  │ │ /data/logs/  │ │  │ │ /data/logs/  │   │  mounted read-only   │
+│  │ │ /data/work/  │ │  │ │ /data/work/  │   │  mounted read-write  │
+│  │ │ /data/db/    │ │  │ │ /data/db/    │   │  SQLite state        │
+│  │ │ /tools/      │ │  │ │ /tools/      │   │  analysis scripts    │
+│  │ └──────────────┘ │  │ └──────────────┘   │                      │
+│  └──────────────────┘  └────────────────────┘                      │
+│             │              │                                       │
+│  ┌──────────▼────────┐  ┌──▼──────────────────┐                    │
+│  │ ailog-agent-      │  │ ailog-agent-        │  ← systemd timers  │
+│  │ service-a.timer   │  │ service-b.timer     │    (every 1h)      │
+│  │                   │  │                     │                    │
+│  │ docker exec:      │  │ docker exec:        │                    │
+│  │  analyze.sh       │  │  analyze.sh         │                    │
+│  │   1. extract.py   │  │   1. extract.py     │                    │
+│  │   2. search-logs  │  │   2. search-logs    │                    │
+│  │   3. Claude AI    │  │   3. Claude AI      │                    │
+│  │   4. Discord通知  │  │   4. Discord通知    │                    │
+│  │   5. commit.py    │  │   5. commit.py      │                    │
+│  └───────────────────┘  └─────────────────────┘                    │
+│             │              │                                       │
+└─────────────┼──────────────┼───────────────────────────────────────┘
+              ▼              ▼
+         Discord Webhook (レポート通知)
+```
+
 ## Prepare
 
 ```bash
