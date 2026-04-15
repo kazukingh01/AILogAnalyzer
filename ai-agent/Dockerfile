@@ -3,9 +3,6 @@ FROM ubuntu:24.04
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       curl jq git ca-certificates sudo python3 && \
-    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    npm install -g @anthropic-ai/claude-code && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root user with sudo privileges
@@ -28,7 +25,11 @@ WORKDIR /home/claude
 RUN git config --global user.email "claude@example.com" \
     && git config --global user.name "Claude"
 
-RUN echo 'export PATH="/tools:$PATH"' >> /home/claude/.bashrc && \
+# Install Claude Code via native installer (supports `claude --update` / self-update)
+RUN curl -fsSL https://claude.ai/install.sh | bash
+ENV PATH=/home/claude/.local/bin:$PATH
+
+RUN echo 'export PATH="/tools:/home/claude/.local/bin:$PATH"' >> /home/claude/.bashrc && \
     echo 'alias claude="claude --dangerously-skip-permissions"' >> /home/claude/.bashrc
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
